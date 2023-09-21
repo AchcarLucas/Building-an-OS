@@ -21,8 +21,10 @@
 ; IP (Code Address)
 ; FS e GS (General Segment)
 
-ORG 0x7C000                 ; especifica o endereço de memória onde o programa será carregado
+ORG 0x7C00                 ; especifica o endereço de memória onde o programa será carregado
 bits 16                     ; as instruções serão de 16 bits
+
+%define ENDL 0x0D, 0x0A
 
 start:
     jmp main
@@ -35,6 +37,7 @@ puts:
     ; procedimento
     push si
     push ax
+    push bx
 
 .loop:
     ; PS: loadsw/loads carregam word/dword (double word) e seus conteúdos
@@ -49,23 +52,25 @@ puts:
     ; jz irá verificar se zero flag é zero, se for, faz um jump no programa
     jz .finish
 
-    mov ah, 0x0E    ; Write Character in TTY Mode (Habilita o TTY Mode na BIOS)
+    mov ah, 0x0e    ; Write Character in TTY Mode (Habilita o TTY Mode na BIOS)
     mov bh, 0x00    ; Text Mode (Page Number)
+    
     int 0x10        ; chama a interrupção de vídeo da BIOS
-
 
     ; se não for zero, continua no loop, até finalizar toda a string
     jmp .loop
 
 .finish:
     ; recuperamos os valores do SI e AX que colocamos no inicio do procedimento
-    pop si
+    pop bx
     pop ax
+    pop si
 
     ; retornamos a função original que foi chamado (o endereço esta na stack)
     ret
 
 main:
+    ; inicializa o ax como zero
     mov ax, 0
 
     ; inicialização do data segment, extra segment e stack segment como zero
@@ -79,8 +84,17 @@ main:
     ; algo na stack, vamos decrementar o pointeiro, então, serão usados
     ; o endereço abaixo do 0x7C00 e não posterior ao 0x7C00
     mov sp, 0x7C00
+
+    ; exibe a mensagem na tela
+    mov si, hello_lucas
+    call puts
+
+    hlt
+
 .halt:
     jmp .halt
+
+hello_lucas: db 'Hello Lucas :)', ENDL, 0
 
 times 510 - ($ - $$) db 0   ; preenche com 0x00 até a posição 510
 dw 0AA55h                   ; assinatura final 0xAA55
