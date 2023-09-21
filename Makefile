@@ -3,7 +3,7 @@ ASM_COMPILER=nasm
 SRC_DIR=src
 BUILD_DIR=build
 IMG_DIR=img
-LOG_DIR=$(BUILD_DIR)/log
+LOG_DIR=log
 
 $(IMG_DIR)/bootloader.img: $(BUILD_DIR)/bootloader.bin
 	cp $(BUILD_DIR)/bootloader.bin $(IMG_DIR)/bootloader.img
