@@ -1,3 +1,18 @@
+; -------------------------------------------------
+; BIOS Interrupts
+; https://en.wikipedia.org/wiki/BIOS_interrupt_call
+; -------------------------------------------------
+; INT 10h -- Video
+; INT 11h -- Equipament Check
+; INT 12h -- Memory Size
+; INT 13h -- Disk I/O
+; INT 14h -- Serial Communications
+; INT 15h -- Cassette
+; INT 16h -- Keyboard I/O
+
+; -------------------------------------------------
+; Same Registeres
+; -------------------------------------------------
 ; CS (Code Segment)
 ; DS (Data Segment)
 ; SS (Stack Segment)
@@ -33,6 +48,11 @@ puts:
 
     ; jz irá verificar se zero flag é zero, se for, faz um jump no programa
     jz .finish
+
+    mov ah, 0x0E    ; Write Character in TTY Mode (Habilita o TTY Mode na BIOS)
+    mov bh, 0x00    ; Text Mode (Page Number)
+    int 0x10        ; chama a interrupção de vídeo da BIOS
+
 
     ; se não for zero, continua no loop, até finalizar toda a string
     jmp .loop
