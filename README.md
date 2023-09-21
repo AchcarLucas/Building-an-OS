@@ -4,8 +4,8 @@ Relembrando a construção de um sistema operacional básico do zero
 
 🚀 Instalações
     sudo apt-get install nasm
-    sudo apt-get install hex
-    Install virtual box ou similar
+    sudo apt-get install basez
+    sudo apt install virtualbox
 
 📦 Building an OS - 1 - Hello world
   
