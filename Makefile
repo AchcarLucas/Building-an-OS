@@ -4,10 +4,10 @@ SRC_DIR=src
 BUILD_DIR=build
 LOG_DIR=log
 
-.PHONY: all floppy_image_generator kernel bootloader clean always
+.PHONY: all floppy_image kernel bootloader clean always
 
 # Floppy Image Generator
-floppy_image_generator: $(BUILD_DIR)/os_build.img
+floppy_image: $(BUILD_DIR)/os_build.img
 $(BUILD_DIR)/os_build.img: bootloader kernel
 	dd if=/dev/zero of=$(BUILD_DIR)/os_build.img bs=512 count=2880
 	mkfs.fat -F 12 -n "NBOS" $(BUILD_DIR)/os_build.img
