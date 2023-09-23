@@ -117,15 +117,146 @@ main:
     mov sp, 0x7C00
 
     ; exibe a mensagem na tela
-    mov si, hello_lucas
+    mov si, hello_lucas_os
     call puts
 
+    ; tentando ler alguma coisa do disco
+    mov [ebr_drive_number], dl  ; bios faz o setting do dl com o número do driver atual
+    mov ax ,1                   ; ler o segundo setor do disco (o primeiro é o bootloader)
+    mov cl, 1                   ; ler apenas 1 setor
+    mov bx, 0x7E00              ; os dados devem ser escritos após o bootloader (512 bytes a frente)
+    call .read_disk
+
+    cli             ; desabilita as interrupções
     hlt
 
-.halt:
-    jmp .halt
+; erro leitura floppy
+.floppy_error:
+    mov si, floppy_error
+    call puts
 
-hello_lucas: db 'Hello Lucas :)', ENDL, 0
+.wait_key_and_reboot:
+    mov si, press_key_to_reboot
+    call puts
+
+    mov ah, 0
+    int 0x16        ; aguarda pressionar uma tecla
+    jmp 0FFFFh:0    ; pula para o inicio da bios
+
+.halt:
+    cli             ; desabilita as interrupções
+    hlt             ; halt
+
+; Rotina do Floppy Disc
+
+; Converte um LBA (Logic Block Address) para CHS (Cylinder - Head - Sector)
+; Param
+;   - ax: Endereço LBA
+; Return
+;   - cl: número do setor
+;   - ch: número do cilindro
+;   - dh: número da cabeça
+.lba_to_chs:
+    push ax
+    push dx
+
+    xor dx, dx                          ; dx = 0
+    div word [bdb_sectors_per_track]    ; ax = LBA / setor por trila
+                                        ; dx = LBA % setor por trila (resto da divisão)
+    inc dx                              ; dx += (LBA % setor por trila) + 1 = número do setor
+    mov cx, dx                          ; cx = dx
+
+    xor dx, dx                          ; dx = 0
+    div word [bdb_heads]                ; ax = ax / número de cabeças = número do cilindro
+                                        ; dx = ax % número de cabeças = número da cabeça
+    mov dh, dl                          ; dh = dl = número da cabeça (8 bits iniciais)
+    mov ch, al                          ; al = ch = número do cilindro (8 bits iniciais)
+    shl ah, 6
+    or cl, ah                           ; cl = ah = número de setores no cilindro
+
+    pop ax
+    mov dl, al                          ; restaura apenas os 8 bits iniciais do dx
+
+    pop ax
+
+    ret
+
+; Leitura do disco
+; Param
+;   - ax: Endereço LBA
+;   - cl: número de setores para ler (maior que 128)
+;   - dl: número do driver
+;   - es:bx: endereço de memória onde será salvo os dados
+.read_disk:
+    ; salva todos os registradores na stack
+    push ax
+    push bx
+    push cx
+    push dx
+    push di
+
+    push cx             ; salva temporariamente o cl (número de setores para ler)
+    call .lba_to_chs    ; computa o CHS
+    pop ax              ; al tem o resultado do cl (do push cx)
+
+    mov ah, 02h         ; IO
+    mov di, 3           ; tentativa de leitura
+
+.read_retry:
+    pusha               ; salva todos os registradores
+
+    mov si, read_floppy_disk
+    call puts
+
+    stc                 ; set o carry flag
+
+    int 0x13            ; interrupção da BIOS para ler disk floppy
+    jnc .read_success   ; carry flag cleared = sucesso
+
+    ; falha na leitura
+    popa
+    call .reset_controller_disk
+
+    dec di              ; decrementa o di
+    test di, di         ; testa se é zero
+    jnz .read_retry     ; se não for zero, tenta novamente
+
+.read_failed:
+    jmp .floppy_error   ; não conseguiu ler o floppy disc (erro)
+
+.read_success:
+    mov si, floppy_success
+    call puts
+
+    popa
+
+    pop di
+    pop dx
+    pop cx
+    pop bx
+    pop ax
+
+    ret
+
+; Faz o reset do controlador de disco
+; Param
+;   - dl: número do driver
+.reset_controller_disk:
+    pusha           ; salva todas os registradores
+    mov ah, 0
+    stc             ; set o carry flag
+
+    int 0x13
+    jc .read_failed ; verifica se carry está ativo, se sim, pula para a falha
+
+    popa            ; restaura todos os registradores
+    ret
+
+hello_lucas_os: db 'Hello - Lucas OS', ENDL, 0
+floppy_error: db 'Error to read floppy disk', ENDL, 0
+floppy_success db "Success to read floppy disk", ENDL, 0
+press_key_to_reboot: db 'Press any key to reboot', ENDL, 0
+read_floppy_disk: db 'Trying read floppy disk data', ENDL, 0
 
 times 510 - ($ - $$) db 0   ; preenche com 0x00 até a posição 510
 dw 0AA55h                   ; assinatura final 0xAA55
