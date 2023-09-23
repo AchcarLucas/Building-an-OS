@@ -6,6 +6,7 @@ Relembrando a construção de um sistema operacional básico do zero
 
     sudo apt-get install nasm
     sudo apt-get install basez
+    sudo apt-get install mtools
     sudo apt install virtualbox
 
 📦 Building an OS - 1 - Hello world
