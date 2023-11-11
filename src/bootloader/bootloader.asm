@@ -161,9 +161,9 @@ main:
     push dx
 
     xor dx, dx                          ; dx = 0
-    div word [bdb_sectors_per_track]    ; ax = LBA / setor por trila
-                                        ; dx = LBA % setor por trila (resto da divisão)
-    inc dx                              ; dx += (LBA % setor por trila) + 1 = número do setor
+    div word [bdb_sectors_per_track]    ; ax = LBA / setor por trilha
+                                        ; dx = LBA % setor por trilha (resto da divisão)
+    inc dx                              ; dx += (LBA % setor por trilha) + 1 = número do setor
     mov cx, dx                          ; cx = dx
 
     xor dx, dx                          ; dx = 0
