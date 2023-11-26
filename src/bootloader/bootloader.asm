@@ -11,7 +11,7 @@
 ; INT 16h -- Keyboard I/O
 
 ; -------------------------------------------------
-; Same Registeres
+; Some Registeres
 ; -------------------------------------------------
 ; CS (Code Segment)
 ; DS (Data Segment)
